@@ -7,9 +7,9 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  getDocs,
   onSnapshot,
   query,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { IFirestoreService } from "./IFirestoreService";
@@ -25,28 +25,9 @@ export class FirestoreService<T> implements IFirestoreService<T> {
     addDoc(this.collectionRef, data as WithFieldValue<DocumentData>);
   }
 
-  listAll(
-    whereOptions?: QueryFieldFilterConstraint,
-    orderOptions?: QueryOrderByConstraint
-  ): Promise<T[]> {
-    let q = null;
-    whereOptions && orderOptions
-      ? (q = query(this.collectionRef, whereOptions, orderOptions))
-      : whereOptions
-      ? (q = query(this.collectionRef, whereOptions))
-      : orderOptions
-      ? (q = query(this.collectionRef, orderOptions))
-      : (q = query(this.collectionRef));
-
-    return getDocs(q).then((response) => {
-      return response.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          } as T)
-      );
-    });
+  createWithCustomId(id: string, data: T): void {
+    const docRef = doc(this.collectionRef, id);
+    setDoc(docRef, data as WithFieldValue<DocumentData>);
   }
 
   update(id: string, data: T): void {
@@ -61,19 +42,22 @@ export class FirestoreService<T> implements IFirestoreService<T> {
 
   onChange(
     handleChange: (values: T[]) => void,
-    options: {
+    options?: {
       whereOptions?: QueryFieldFilterConstraint;
       orderOptions?: QueryOrderByConstraint;
     }
   ): void {
-    const { whereOptions, orderOptions } = options;
     let q = null;
-    whereOptions && orderOptions
-      ? (q = query(this.collectionRef, whereOptions, orderOptions))
-      : whereOptions
-      ? (q = query(this.collectionRef, whereOptions))
-      : orderOptions
-      ? (q = query(this.collectionRef, orderOptions))
+    options?.whereOptions && options?.orderOptions
+      ? (q = query(
+          this.collectionRef,
+          options?.whereOptions,
+          options?.orderOptions
+        ))
+      : options?.whereOptions
+      ? (q = query(this.collectionRef, options?.whereOptions))
+      : options?.orderOptions
+      ? (q = query(this.collectionRef, options?.orderOptions))
       : (q = query(this.collectionRef));
 
     onSnapshot(q, (response) => {
