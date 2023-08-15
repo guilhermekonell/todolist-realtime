@@ -1,29 +1,48 @@
-import { TodoModel, TodoSchema } from "@/app/schemas/TodoSchema";
-import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
+
+import { db } from "@/firebase/config";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Timestamp, collection } from "firebase/firestore";
 import { useForm } from "react-hook-form";
+import { useSession } from "next-auth/react";
+import { TodoModel } from "@/app/models/TodoModel";
+import { TodoSchema, TodoSchemaType } from "@/app/schemas/TodoSchema";
+import { FirestoreService } from "@/firebase/firestore/FirestoreService";
 
-type FormProps = {
-  handleSubmitForm: (data: TodoModel) => void;
-};
+const firestoreService = new FirestoreService<TodoModel>(
+  collection(db, "todos")
+);
 
-export default function TodoForm({ handleSubmitForm }: FormProps) {
+export default function TodoForm() {
+  const { data: session } = useSession();
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<TodoModel>({
+  } = useForm<TodoSchemaType>({
     resolver: zodResolver(TodoSchema),
   });
 
-  function submitForm(data: TodoModel) {
-    handleSubmitForm(data);
+  function createTodo(data: TodoSchemaType) {
+    const newTodo = {
+      title: data.title,
+      blocked: false,
+      owner: {
+        email: session?.user?.email,
+        name: session?.user?.name,
+      },
+      status: "backlog",
+      createAt: Timestamp.now(),
+      updateAt: Timestamp.now(),
+    } as TodoModel;
+    firestoreService.create(newTodo);
     reset();
   }
 
   return (
-    <form className="w-full" onSubmit={handleSubmit(submitForm)}>
+    <form className="w-full" onSubmit={handleSubmit(createTodo)}>
       <div className="relative">
         <input
           type="text"
