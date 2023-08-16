@@ -4,63 +4,46 @@ import { useEffect, useState } from "react";
 import AuthenticatedPage from "./components/auth/AuthenticatedPage";
 import Header from "./components/header/Header";
 import { Todo } from "./components/todo";
-import { collection, orderBy } from "firebase/firestore";
-import { database, db } from "@/firebase/config";
+import {
+  QueryFieldFilterConstraint,
+  QueryOrderByConstraint,
+  collection,
+} from "firebase/firestore";
+import { db } from "@/firebase/config";
 import { TodoModel } from "./models/TodoModel";
 import { FirestoreService } from "@/firebase/firestore/FirestoreService";
-import { UserModel } from "./models/UserModel";
-import Image from "next/image";
-import { onChildChanged, onValue, ref } from "firebase/database";
-import { OnlineUserModel } from "./models/OnlineUserModel";
+import Users from "./components/users/Users";
 
 const firestoreServiceTodos = new FirestoreService<TodoModel>(
   collection(db, "todos")
 );
 
-const firestoreServiceUsers = new FirestoreService<UserModel>(
-  collection(db, "users")
-);
-
-const userStatusDatabaseRef = ref(database, "connectedUsers");
-
 export default function Home() {
   const [todos, setTodos] = useState<TodoModel[]>([]);
-  const [users, setUsers] = useState<UserModel[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [filteredTodos, setFilteredTodos] = useState<TodoModel[]>([]);
 
   useEffect(() => {
-    const orderOptions = orderBy("updateAt", "desc");
-
-    firestoreServiceTodos.onChange(setTodos, { orderOptions });
-    firestoreServiceUsers.onChange(setUsers);
-
-    onValue(userStatusDatabaseRef, (snapshot) => {
-      if (!snapshot.val()) return;
-
-      const usersOnline = Object.keys(snapshot.val()).map((v) => {
-        if (snapshot.val()[v].online) {
-          return snapshot.val()[v].email;
-        }
-      });
-      setOnlineUsers(usersOnline);
-    });
-
-    onChildChanged(userStatusDatabaseRef, (snapshot) => {
-      if (snapshot.val().online) {
-        setOnlineUsers((users) => [...users, snapshot.val().email]);
-      }
-
-      if (!snapshot.val().online) {
-        setOnlineUsers((users) =>
-          users.filter((user) => user !== snapshot.val().email)
-        );
-      }
-    });
+    fetchData();
   }, []);
 
-  function userIsOnline(email: string): boolean {
-    const index = onlineUsers.findIndex((user) => user === email);
-    return index > -1;
+  function fetchData(
+    where?: QueryFieldFilterConstraint[],
+    order?: QueryOrderByConstraint[]
+  ) {
+    firestoreServiceTodos.onChange(setTodos, {
+      whereOptions: where,
+      orderOptions: order,
+    });
+  }
+
+  function onChangeFilter(
+    where?: QueryFieldFilterConstraint[],
+    order?: QueryOrderByConstraint[]
+  ) {
+    firestoreServiceTodos.onChange(setFilteredTodos, {
+      whereOptions: where,
+      orderOptions: order,
+    });
   }
 
   return (
@@ -70,36 +53,30 @@ export default function Home() {
         <main className="flex justify-center p-5">
           <div className="w-full max-w-5xl flex flex-col items-center gap-4">
             <h1 className="font-semibold text-lg text-gray-300">To-Do List</h1>
+            <Users />
+            <div className="border-b border-solid border-zinc-500" />
             <Todo.Form />
 
-            <div className="w-full flex justify-end gap-2">
-              {users.map((user) => (
-                <div
-                  key={user.email}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <Image
-                    src={user?.image}
-                    alt={user?.name}
-                    width={25}
-                    height={25}
-                    className={`rounded-full ${
-                      userIsOnline(user.email) ? "ring ring-emerald-500" : ""
-                    }`}
-                  />
-                </div>
-              ))}
-            </div>
+            <Todo.Filter onChangeFilter={onChangeFilter} />
 
             <ul className="w-full flex flex-col gap-2">
-              {todos.map((item) => (
-                <li key={item.id}>
-                  <div className="w-full flex justify-between p-6 bg-gray-50 border border-gray-300 rounded-lg shadow dark:bg-gray-700 dark:border-gray-600">
-                    <Todo.Item item={item} />
-                    <Todo.Actions item={item} />
-                  </div>
-                </li>
-              ))}
+              {filteredTodos.length > 0
+                ? filteredTodos.map((item) => (
+                    <li key={item.id}>
+                      <div className="w-full flex justify-between p-6 bg-gray-50 border border-gray-300 rounded-lg shadow dark:bg-gray-700 dark:border-gray-600">
+                        <Todo.Item item={item} />
+                        <Todo.Actions item={item} />
+                      </div>
+                    </li>
+                  ))
+                : todos.map((item) => (
+                    <li key={item.id}>
+                      <div className="w-full flex justify-between p-6 bg-gray-50 border border-gray-300 rounded-lg shadow dark:bg-gray-700 dark:border-gray-600">
+                        <Todo.Item item={item} />
+                        <Todo.Actions item={item} />
+                      </div>
+                    </li>
+                  ))}
             </ul>
           </div>
         </main>

@@ -43,21 +43,21 @@ export class FirestoreService<T> implements IFirestoreService<T> {
   onChange(
     handleChange: (values: T[]) => void,
     options?: {
-      whereOptions?: QueryFieldFilterConstraint;
-      orderOptions?: QueryOrderByConstraint;
+      whereOptions?: QueryFieldFilterConstraint[];
+      orderOptions?: QueryOrderByConstraint[];
     }
   ): void {
     let q = null;
     options?.whereOptions && options?.orderOptions
       ? (q = query(
           this.collectionRef,
-          options?.whereOptions,
-          options?.orderOptions
+          ...options?.whereOptions,
+          ...options?.orderOptions
         ))
       : options?.whereOptions
-      ? (q = query(this.collectionRef, options?.whereOptions))
+      ? (q = query(this.collectionRef, ...options?.whereOptions))
       : options?.orderOptions
-      ? (q = query(this.collectionRef, options?.orderOptions))
+      ? (q = query(this.collectionRef, ...options?.orderOptions))
       : (q = query(this.collectionRef));
 
     onSnapshot(q, (response) => {

@@ -10,8 +10,8 @@ export interface IFirestoreService<T> {
   onChange(
     handleChange: (values: T[]) => void,
     options: {
-      whereOptions?: QueryFieldFilterConstraint;
-      orderOptions?: QueryOrderByConstraint;
+      whereOptions?: QueryFieldFilterConstraint[];
+      orderOptions?: QueryOrderByConstraint[];
     }
   ): void;
 }
