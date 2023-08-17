@@ -54,7 +54,7 @@ Em um squad composto por três pessoas, os membros identificaram um desafio reco
 - [x] A autenticação deve ser com login da Google
 - [x] Deve ser feito utilizando React Hooks
 - [x] Deve ser utilizado FireStore como banco de dados
-- [!] Deve ser publicado no serverless do firebase
+- [ ] Deve ser publicado no serverless do firebase
 - [x] Quando um usuário fazer alguma ação deve ser atualizado em tempo real para outros usuários
 - [ ] Colocar CI/CD com GitHub Actions
 - [ ] Deve conter testes
