@@ -49,23 +49,40 @@ export default function TodoFilter({
         className="w-full flex gap-2 h-10 justify-end"
         onSubmit={handleSubmit(handleSubmitFilterTodos)}
       >
-        <Controller
-          name="status"
-          control={control}
-          defaultValue={[]}
-          render={({ field: { onChange, value } }) => (
-            <Select
-              isMulti
-              value={value}
-              onChange={onChange}
-              options={[
-                { value: "backlog", label: "Backlog" },
-                { value: "inprogress", label: "In Progress" },
-                { value: "done", label: "Done" },
-              ]}
-            />
-          )}
-        />
+        <div className="flex min-w-[140px]">
+          <Controller
+            name="status"
+            control={control}
+            defaultValue={[]}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                isMulti
+                value={value}
+                onChange={onChange}
+                unstyled
+                placeholder="Status"
+                classNames={{
+                  control: () =>
+                    "min-w-[140px] px-1 h-full border text-sm rounded block bg-gray-700 border-gray-600 text-gray-300",
+                  menu: () =>
+                    "border border-gray-600 bg-gray-700 text-gray-300 rounded-lg",
+                  option: ({ isFocused }) =>
+                    `${isFocused ? "bg-blue-600" : ""}`,
+                  valueContainer: () => "flex gap-1",
+                  multiValue: () =>
+                    "flex gap-2 border border-gray-700 bg-gray-800 rounded p-1.5 hover:bg-gray-900",
+                  input: () => "text-gray-300",
+                  placeholder: () => "text-gray-400",
+                }}
+                options={[
+                  { value: "backlog", label: "Backlog" },
+                  { value: "inprogress", label: "In Progress" },
+                  { value: "done", label: "Done" },
+                ]}
+              />
+            )}
+          />
+        </div>
         <input
           type="text"
           placeholder="Pesquisar"
